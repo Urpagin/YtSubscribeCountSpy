@@ -1,0 +1,8 @@
+# Don't forget the double quotes in 'channel_id' because it's a string.
+[channel_info]
+	channel_id = "UCww2zZWg4Cf5xcRKG-ThmXQ"
+	base_subs_count = 12_000_000
+
+[runtime]
+	step_value = 10_000
+	check_interval = 1_800
