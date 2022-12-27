@@ -11,9 +11,9 @@ class YTChannelStatistics:
             return None
         return '{:,}'.format(num).replace(',', ' ')
 
-    def __init__(self, channel_id: str, api_token: str):
+    def __init__(self, channel_id: str, youtube_api_token: str):
         self._channel_id = channel_id
-        self._api_token = api_token
+        self._youtube_api_token = youtube_api_token
         self.errors = []
         self.subscriber_count = None
         self.video_count = None
@@ -35,7 +35,7 @@ class YTChannelStatistics:
         """Return the YoutubeApi url."""
         url = (
             f"https://www.googleapis.com/youtube/v3/channels?id="
-            f"{self._channel_id}&key={self._api_token}&part=statistics"
+            f"{self._channel_id}&key={self._youtube_api_token}&part=statistics"
         )
         return url
 
@@ -43,18 +43,21 @@ class YTChannelStatistics:
         """Return the YoutubeApi url."""
         url = (
             f"https://www.googleapis.com/youtube/v3/channels?id="
-            f"{self._channel_id}&key={self._api_token}&part=brandingSettings"
+            f"{self._channel_id}&key={self._youtube_api_token}&part=brandingSettings"
         )
         return url
 
     def _is_valid(self) -> bool:
         """ Verify that 'channel_id' & 'api_token' are str && the length they should be. If not return False."""
-        if type(self._channel_id) != str or type(self._api_token) != str:
+
+        if type(self._channel_id) != str or len(self._channel_id) != 24:
+            print("The channel id is not correct.")
             return False
-        elif len(self._channel_id) != 24 or len(self._api_token) != 39:
+        if type(self._youtube_api_token) != str or len(self._youtube_api_token) != 39:
+            print("The youtube api token is not correct")
             return False
-        else:
-            return True
+
+        return True
 
     def _fetch_data(self, url: str) -> dict | None:
         """ Gets dict from the url with httpx.get() and json.load() methods."""
@@ -130,9 +133,9 @@ class YTChannelStatistics:
             self.errors.append(e)
 
     def __str__(self):
-        diagnostic = (
+        return (
             f"_channel_id: {self._channel_id}\n"
-            f"_api_token: {self._api_token}\n"
+            f"_api_token: {self._youtube_api_token}\n"
             f"errors: {self.errors}\n"
             f"subscriber_count: {self.subscriber_count}\n"
             f"video_count: {self.video_count}\n"
@@ -144,5 +147,3 @@ class YTChannelStatistics:
             f"country: {self.country}\n"
             f"banner_url: {self.banner_url}\n"
         )
-
-        return diagnostic

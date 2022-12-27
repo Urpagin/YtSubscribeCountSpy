@@ -12,24 +12,24 @@ import os
 from dataclasses import dataclass, field
 
 
-def make_config_file(config_filepath: str) -> None:
+def make_config_file(config_filename: str) -> None:
     """Creates the toml config file if it doesn't exist."""
 
-    if os.path.isfile(config_filepath):
-        print(f"{config_filepath!r} exists.")
+    if os.path.isfile(config_filename):
+        print(f"Found config file: {config_filename!r}")
     else:
-        with open(config_filepath, 'w') as file:
-            base_file_data = (f"# Don't forget the double quotes in 'channel_id' because it's a string.\n"
+        with open(config_filename, 'w') as file:
+            base_file_data = (f"# Don't forget the double quotes in field 'channel_id' because it's a string.\n"
                               f"[channel_info]\n\tchannel_id = <FILL_HERE>\n\tbase_subs_count = <FILL_HERE>\n\n"
-                              f"[runtime]\n\tstep_value = <FILL_HERE>\n\tcheck_interval = <FILL_HERE>")
+                              f"[runtime]\n\tstep_value = <FILL_HERE>\n\tcheck_interval = <FILL_HERE> # in seconds")
             file.write(base_file_data)
-        quit(f"Please open {config_filepath!r} and fill in the fields.")
+        quit(f"Please open {config_filename!r} and fill in the fields.")
 
 
 @dataclass
 class LoadConfig:
     """A class that loads variables from a toml config file."""
-    config_filepath: str
+    config_filename: str
 
     channel_id: str = None, field(init=False)
     base_subs_count: int = None, field(init=False)
@@ -37,7 +37,7 @@ class LoadConfig:
     check_interval: float = None, field(init=False)
 
     def load_config(self) -> dict:
-        with open(self.config_filepath, 'rb') as file:
+        with open(self.config_filename, 'rb') as file:
             config_data: dict = tomllib.load(file)
 
         return config_data
@@ -89,7 +89,7 @@ def send_webhook(webhook_url: str, message: str) -> None:
         print(f"Failed to send webhook. Error: {e}")
 
 
-def webhook_message(channel: YTChannelStatistics, youtube_token: str, sub_diff: int):
+def webhook_message(channel: YTChannelStatistics, sub_diff: int):
     return (f":clock1: <t:{get_current_timestamp()}:F> :clock1:\n"
             f"-**{channel.name}** has roughly **{number_prettifier(channel.subscriber_count)}** subscribers.\n"
             f"-That means **{channel.name}** lost roughly **{number_prettifier(sub_diff)}** subscribers!")
@@ -114,15 +114,15 @@ def read_diff(filename: str) -> int:
 
 
 def main() -> None:
-    make_config_file(CONFIG_FILEPATH)
+    make_config_file(CONFIG_FILENAME)
     env = LoadEnv()
-    config = LoadConfig(CONFIG_FILEPATH)
+    config = LoadConfig(CONFIG_FILENAME)
 
-    channel = YTChannelStatistics(channel_id=config.channel_id, api_token=env.youtube_api_key)
+    channel = YTChannelStatistics(channel_id=config.channel_id, youtube_api_token=env.youtube_api_key)
     write_subs(current_subs=channel.subscriber_count, filename=DIFFERENCE_PICKLE_FILENAME)
 
     while True:
-        channel = YTChannelStatistics(channel_id=config.channel_id, api_token=env.youtube_api_key)
+        channel = YTChannelStatistics(channel_id=config.channel_id, youtube_api_token=env.youtube_api_key)
         if has_changed(current_sub_count=channel.subscriber_count,
                        step=config.subs_diff_step_value, filename=DIFFERENCE_PICKLE_FILENAME):
             message = webhook_message(channel=channel, youtube_token=env.youtube_api_key,
@@ -134,7 +134,6 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    CONFIG_FILEPATH = 'config.toml'
+    CONFIG_FILENAME = 'config.toml'
     DIFFERENCE_PICKLE_FILENAME = 'diff.pickle'
     main()
-# norman = YTChannelStatistics()
